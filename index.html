@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial;
+        display: flex;
+        flex-flow: wrap;
+        margin: 0;
+      }
+      #escribiendo {
+        background: rgb(49, 223, 78);
+        width: 100vw;
+      }
+      #messages { 
+        list-style-type: none; 
+        margin: 0; 
+        padding: 0; 
+        width: 60vw;
+        height: 75vh;
+        border: solid black 1px;
+        overflow:hidden;
+      }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+    </style>
+  </head>
+  <div id="escribiendo"></div>
+  <ul id="messages"></ul>
+  <input id="m" />
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io();
+  </script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script>
+      $(function () {
+
+var socket = io();
+var nickname = prompt("Introduce tu nombre:");
+socket.emit('usuario', nickname);
+var uploader = new SocketIOFileUpload(socket);
+uploader.listenOnInput(document.getElementById("siofu_input"));
+
+$('form').submit(function(e){
+  e.preventDefault(); 
+  if ($('#m').val() != ''){
+    socket.emit('chat message', $('#m').val());
+  }
+  socket.emit('no escribiendo', nickname);
+  $('#m').val('');
+  return false;
+});
+
+var timeout=null;
+$('form').keypress(function() {
+  socket.emit('escribiendo', nickname);
+  if (timeout)
+    clearTimeout(timeout);
+
+  timeout=setTimeout(()=>{
+    socket.emit('no escribiendo', nickname);
+  },2000)
+});
+
+socket.on('esta escribiendo', function(usuario){
+  if (usuario == nickname){
+    $('#escribiendo').text("estas escribiendo.");
+  }else{
+    $('#escribiendo').text(usuario + " esta escribiendo.");
+  }
+});
+
+socket.on('sin escribir', function(nickname){
+  $('#escribiendo').text("");
+});
+
+socket.on('conectado', function(usuario){
+
+      if (usuario == nickname){
+    $('#messages').append($("<li>te has conectado</li>"));  
+  }else{
+  $('#messages').append($("<li>"+usuario+" se ha conectado al chat.</li>"));
+  }
+});
+socket.on('desconectado', function(nickname){
+      $('#messages').append($("<li>"+nickname+" se ha desconectado del chat.</li>"));
+
+    });
+
+
+});
+
+      
+    </script>
+  <body>
+    <ul id="messages"></ul>
+    <form action="">
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+  </body>
+</html>
